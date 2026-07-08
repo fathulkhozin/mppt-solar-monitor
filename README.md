@@ -59,7 +59,17 @@ Format JSON yang diharapkan oleh Server:
 ```
 
 ## 📸 Tampilan Dashboard
-*(Tambahkan *screenshot* tampilan web dashboard Anda di sini)*
 
+<p align="center">
+  <img width="800" alt="Screenshot 1" src="https://github.com/user-attachments/assets/143bb215-8630-4fef-a1f8-b3bfe6f2abdb" />
+</p>
+<br>
+<p align="center">
+  <img width="800" alt="Screenshot 2" src="https://github.com/user-attachments/assets/b4c0836c-b75d-48e5-b6a0-c2aff913960f" />
+</p>
+<br>
+<p align="center">
+  <img width="800" alt="Screenshot 3" src="https://github.com/user-attachments/assets/50f18236-b4c9-4490-9dc4-18d2767eda58" />
+</p>
 ---
 *Dibuat khusus untuk proyek MPPT IoT Fathul (2026).*
