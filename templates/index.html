@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPPT Solar Dashboard - Premium</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (via CDN for simplicity) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#0a0e27',
+                        cardBg: '#111631',
+                        accentOrange: '#ff9f43',
+                        accentBlue: '#3b82f6',
+                        accentGreen: '#10b981',
+                        accentPurple: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0a0e27;
+            color: #f3f4f6;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(255, 159, 67, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(17, 22, 49, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .glass-panel {
+            background: rgba(17, 22, 49, 0.9);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-value {
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        .top-accent-line {
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--tw-gradient-from), transparent);
+            border-radius: 2px;
+        }
+
+        /* Console feed */
+        .terminal-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #374151 transparent;
+        }
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background-color: #374151;
+            border-radius: 3px;
+        }
+        
+        .hidden-section {
+            display: none !important;
+        }
+        
+        /* Input styling */
+        input[type="number"], select {
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            outline: none;
+        }
+        input[type="number"]:focus, select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        #login-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md mx-4 shadow-2xl border-t border-blue-500/30">
+            <div class="text-center mb-8">
+                <div class="inline-flex p-3 bg-gradient-to-br from-accentOrange to-red-500 rounded-xl shadow-lg mb-4">
+                    <i data-lucide="sun" class="text-white w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold">FATHUL MPPT</h2>
+                <p class="text-gray-400 mt-1">Admin Authorization Required</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-1">Username</label>
+                    <input type="text" id="username" class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm text-gray-400 mb-1">Password</label>
+                    <input type="password" id="password" class="w-full bg-black/30 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" required>
+                </div>
+                <p id="login-error" class="text-red-400 text-sm mb-4 hidden text-center">Invalid credentials</p>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium p-3 rounded-lg transition-colors shadow-lg shadow-blue-500/25">
+                    Secure Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-full md:w-64 glass-card m-4 md:mr-0 flex flex-col border-r border-gray-800 z-10 shrink-0 hidden-section">
+        <div class="p-6 flex items-center gap-3 border-b border-gray-800">
+            <div class="p-2 bg-gradient-to-br from-accentOrange to-red-500 rounded-lg shadow-lg shadow-orange-500/20">
+                <i data-lucide="sun" class="text-white w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight">MPPT Solar</h1>
+                <p class="text-xs text-gray-400">Admin Dashboard</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-accentBlue rounded-xl border border-blue-500/20 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="#" onclick="switchTab('analytics')" id="tab-analytics" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                <span class="font-medium">Analytics</span>
+            </a>
+            <a href="#" onclick="switchTab('settings')" id="tab-settings" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                <span class="font-medium">Settings</span>
+            </a>
+            <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-xl transition-colors mt-8">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+                <span class="font-medium">Log Out</span>
+            </a>
+        </nav>
+
+        <div class="p-4 mt-auto">
+            <div class="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
+                <div class="flex items-center gap-2 mb-2">
+                    <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-red-500 pulse-dot"></div>
+                    <span id="status-text" class="text-sm font-medium text-gray-300">Disconnected</span>
+                </div>
+                <p class="text-xs text-gray-500" id="last-update-time">Last update: --:--:--</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 p-4 md:p-8 overflow-y-auto hidden-section">
+        <!-- Top Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-bold" id="page-title">System Overview</h2>
+                <p class="text-gray-400 text-sm mt-1" id="page-subtitle">Real-time performance metrics</p>
+            </div>
+            <div class="text-right hidden sm:block">
+                <div id="live-clock" class="text-xl font-medium tracking-wide">--:--:--</div>
+                <div id="live-date" class="text-sm text-gray-400">Loading date...</div>
+            </div>
+        </header>
+
+        <!-- ==================== DASHBOARD VIEW ==================== -->
+        <div id="view-dashboard">
+            <!-- Metric Cards Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Solar Power -->
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="top-accent-line from-accentOrange"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-gray-400 font-medium text-sm">Solar Power (PLTS)</p>
+                            <h3 class="text-3xl font-bold mt-1 metric-value"><span id="val-p-plts">0.00</span><span class="text-lg text-gray-500 ml-1">W</span></h3>
+                        </div>
+                        <div class="p-3 bg-orange-500/10 rounded-xl">
+                            <i data-lucide="sun" class="w-6 h-6 text-accentOrange group-hover:scale-110 transition-transform"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs text-gray-400 mt-4 pt-4 border-t border-gray-800/50">
+                        <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-orange-400"></i> <span id="val-v-plts">0.00</span> V</span>
+                        <span class="flex items-center gap-1"><i data-lucide="activity" class="w-3 h-3 text-orange-400"></i> <span id="val-i-plts">0.00</span> A</span>
+                    </div>
+                </div>
+
+                <!-- Battery Level -->
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="top-accent-line from-accentGreen"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-gray-400 font-medium text-sm">Battery Level</p>
+                            <h3 class="text-3xl font-bold mt-1 metric-value"><span id="val-batt">0.0</span><span class="text-lg text-gray-500 ml-1">%</span></h3>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 rounded-xl relative">
+                            <i data-lucide="battery-charging" class="w-6 h-6 text-accentGreen group-hover:scale-110 transition-transform"></i>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-1.5 mt-4">
+                        <div id="batt-bar" class="bg-accentGreen h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 text-right" id="batt-status">Charging</p>
+                </div>
+
+                <!-- Output Power -->
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="top-accent-line from-accentBlue"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-gray-400 font-medium text-sm">Output Power</p>
+                            <h3 class="text-3xl font-bold mt-1 metric-value"><span id="val-p-out">0.00</span><span class="text-lg text-gray-500 ml-1">W</span></h3>
+                        </div>
+                        <div class="p-3 bg-blue-500/10 rounded-xl">
+                            <i data-lucide="plug-zap" class="w-6 h-6 text-accentBlue group-hover:scale-110 transition-transform"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs text-gray-400 mt-4 pt-4 border-t border-gray-800/50">
+                        <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-blue-400"></i> <span id="val-v-out">0.00</span> V</span>
+                        <span class="flex items-center gap-1"><i data-lucide="activity" class="w-3 h-3 text-blue-400"></i> <span id="val-i-out">0.00</span> A</span>
+                    </div>
+                </div>
+
+                <!-- Efficiency -->
+                <div class="glass-card p-6 relative overflow-hidden group">
+                    <div class="top-accent-line from-accentPurple"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-gray-400 font-medium text-sm">MPPT Efficiency</p>
+                            <h3 class="text-3xl font-bold mt-1 metric-value"><span id="val-eff">0.0</span><span class="text-lg text-gray-500 ml-1">%</span></h3>
+                        </div>
+                        <div class="p-3 bg-purple-500/10 rounded-xl">
+                            <i data-lucide="gauge" class="w-6 h-6 text-accentPurple group-hover:scale-110 transition-transform"></i>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-1.5 mt-4">
+                        <div id="eff-bar" class="bg-accentPurple h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 text-right">System Loss: <span id="val-loss">0.00</span> W</p>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Table + Terminal -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Data Table -->
+                <div class="glass-card p-6 lg:col-span-2 overflow-hidden flex flex-col">
+                    <h3 class="font-semibold text-lg mb-4">System Parameters</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-gray-400 text-sm border-b border-gray-800">
+                                    <th class="pb-3 font-medium">Parameter</th>
+                                    <th class="pb-3 font-medium">Input (PLTS)</th>
+                                    <th class="pb-3 font-medium">Output (Load)</th>
+                                    <th class="pb-3 font-medium text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                <tr class="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
+                                    <td class="py-4 text-gray-300">Voltage (V)</td>
+                                    <td class="py-4 font-medium" id="tbl-v-plts">--</td>
+                                    <td class="py-4 font-medium" id="tbl-v-out">--</td>
+                                    <td class="py-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 rounded text-xs">Normal</span></td>
+                                </tr>
+                                <tr class="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
+                                    <td class="py-4 text-gray-300">Current (A)</td>
+                                    <td class="py-4 font-medium" id="tbl-i-plts">--</td>
+                                    <td class="py-4 font-medium" id="tbl-i-out">--</td>
+                                    <td class="py-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 rounded text-xs">Optimal</span></td>
+                                </tr>
+                                <tr class="hover:bg-gray-800/20 transition-colors">
+                                    <td class="py-4 text-gray-300">Power (W)</td>
+                                    <td class="py-4 font-bold text-accentOrange" id="tbl-p-plts">--</td>
+                                    <td class="py-4 font-bold text-accentBlue" id="tbl-p-out">--</td>
+                                    <td class="py-4 text-right"><span class="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs">Tracking</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Terminal/Console Feed -->
+                <div class="glass-card p-6 flex flex-col h-full max-h-80">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg flex items-center gap-2">
+                            <i data-lucide="terminal" class="w-4 h-4 text-gray-400"></i>
+                            Live Data Feed
+                        </h3>
+                    </div>
+                    <div class="bg-gray-900/80 rounded-xl p-3 flex-1 overflow-y-auto terminal-scroll border border-gray-800/50 font-mono text-xs">
+                        <ul id="console-feed" class="space-y-2 text-green-400">
+                            <li class="text-gray-500">Waiting for data...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ANALYTICS VIEW ==================== -->
+        <div id="view-analytics" class="hidden-section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Main Area Chart -->
+                <div class="glass-card p-6 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-semibold text-lg">Power Generation vs Usage</h3>
+                        <span class="text-xs px-2 py-1 bg-gray-800 text-gray-300 rounded-lg">Last 30 updates</span>
+                    </div>
+                    <div class="relative h-96 w-full">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart -->
+                <div class="glass-card p-6 flex flex-col">
+                    <h3 class="font-semibold text-lg mb-6">Energy Distribution</h3>
+                    <div class="relative h-64 w-full flex-1 flex justify-center items-center">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <div class="flex justify-between text-sm border-b border-gray-800 pb-2">
+                            <span class="text-gray-400">Total Generation</span>
+                            <span class="font-bold text-accentOrange" id="stat-gen">0 W</span>
+                        </div>
+                        <div class="flex justify-between text-sm border-b border-gray-800 pb-2">
+                            <span class="text-gray-400">Output Usage</span>
+                            <span class="font-bold text-accentBlue" id="stat-use">0 W</span>
+                        </div>
+                        <div class="flex justify-between text-sm border-b border-gray-800 pb-2">
+                            <span class="text-gray-400">System Losses</span>
+                            <span class="font-bold text-red-400" id="stat-loss">0 W</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SETTINGS VIEW ==================== -->
+        <div id="view-settings" class="hidden-section">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                <!-- Current Settings (Read Only) -->
+                <div class="glass-card p-8">
+                    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-800">
+                        <div class="p-3 bg-blue-500/10 rounded-xl">
+                            <i data-lucide="info" class="w-8 h-8 text-accentBlue"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Current Configuration</h3>
+                            <p class="text-sm text-gray-400">Settings currently active on ESP32</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-3 border-b border-gray-800/50">
+                            <span class="text-gray-400">Max PV Voltage</span>
+                            <span class="font-bold text-white text-lg" id="disp-vmax">-- V</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-800/50">
+                            <span class="text-gray-400">Max PV Current</span>
+                            <span class="font-bold text-white text-lg" id="disp-imax">-- A</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-800/50">
+                            <span class="text-gray-400">Battery Type</span>
+                            <span class="font-bold text-white text-lg" id="disp-battype">--</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-800/50">
+                            <span class="text-gray-400">System Voltage</span>
+                            <span class="font-bold text-white text-lg" id="disp-sysvolt">-- V</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-800/50">
+                            <span class="text-gray-400">Battery Capacity</span>
+                            <span class="font-bold text-white text-lg" id="disp-batcap">-- Ah</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Settings Form -->
+                <div class="glass-card p-8">
+                    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-800">
+                        <div class="p-3 bg-orange-500/10 rounded-xl">
+                            <i data-lucide="edit-3" class="w-8 h-8 text-accentOrange"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Update Settings</h3>
+                            <p class="text-sm text-gray-400">Send new configuration to ESP32</p>
+                        </div>
+                    </div>
+
+                    <form id="settings-form" onsubmit="submitSettings(event)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Max PV Voltage (V)</label>
+                                <input type="number" id="sol_vmax" min="18" max="50" step="1" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Max PV Current (A)</label>
+                                <input type="number" id="sol_imax" min="1" max="20" step="1" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Battery Chemistry</label>
+                                <select id="bat_type" required>
+                                    <option value="0">SLA / Lead Acid</option>
+                                    <option value="1">Li-ion</option>
+                                    <option value="2">LiFePO4</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">System Voltage</label>
+                                <select id="sys_volt" required>
+                                    <option value="12">12V</option>
+                                    <option value="24">24V</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Capacity (Ah)</label>
+                                <input type="number" id="bat_cap" min="5" max="200" step="5" required>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-800 flex flex-col gap-4">
+                            <button type="submit" id="btn-save" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                                <i data-lucide="upload-cloud" class="w-4 h-4"></i> Apply Settings to ESP32
+                            </button>
+                            <span id="settings-status" class="text-sm text-gray-400 text-center block">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-green-400 hidden inline-block align-middle" id="settings-success-icon"></i>
+                                <span id="settings-msg" class="align-middle">Status: Waiting...</span>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Firmware Update (OTA) Form -->
+            <div class="mt-6 glass-panel rounded-2xl p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-purple-500/10 rounded-xl">
+                        <i data-lucide="cpu" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold">Remote Firmware Update (OTA)</h3>
+                        <p class="text-sm text-gray-400">Upload .bin file to flash ESP32 over WiFi</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <input type="file" id="ota-file" accept=".bin" class="block w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-white hover:file:bg-gray-700 transition-colors cursor-pointer border border-gray-800 rounded-xl" />
+                    <button onclick="handleOtaUpload()" id="btn-ota" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Flash to ESP32
+                    </button>
+                    <span id="ota-status" class="text-sm text-gray-400 text-center block mt-2">
+                        <span id="ota-msg" class="align-middle">Status: Ready</span>
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // -------------------------
+        // Login & Session State
+        // -------------------------
+        const token = localStorage.getItem('mppt_token');
+        if (token) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('sidebar').classList.remove('hidden-section');
+            document.getElementById('main-content').classList.remove('hidden-section');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('login-error');
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('mppt_token', data.token);
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('sidebar').classList.remove('hidden-section');
+                    document.getElementById('main-content').classList.remove('hidden-section');
+                    err.classList.add('hidden');
+                } else {
+                    err.classList.remove('hidden');
+                }
+            } catch (error) {
+                err.innerText = "Server not reachable";
+                err.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('mppt_token');
+            location.reload();
+        }
+
+        // -------------------------
+        // Navigation Logic
+        // -------------------------
+        function switchTab(tabId) {
+            // Hide all
+            document.getElementById('view-dashboard').classList.add('hidden-section');
+            document.getElementById('view-analytics').classList.add('hidden-section');
+            document.getElementById('view-settings').classList.add('hidden-section');
+            
+            // Reset styles
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.className = "nav-item flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-xl transition-colors";
+            });
+
+            // Show target
+            document.getElementById('view-' + tabId).classList.remove('hidden-section');
+            
+            // Set active style
+            const activeTab = document.getElementById('tab-' + tabId);
+            activeTab.className = "nav-item flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-accentBlue rounded-xl border border-blue-500/20 transition-colors";
+
+            // Update titles
+            const titles = {
+                'dashboard': ['System Overview', 'Real-time performance metrics'],
+                'analytics': ['Historical Analytics', 'Power generation and usage trends'],
+                'settings': ['Hardware Settings', 'Configure ESP32 parameters remotely']
+            };
+            document.getElementById('page-title').innerText = titles[tabId][0];
+            document.getElementById('page-subtitle').innerText = titles[tabId][1];
+            
+            // Re-render charts if analytics is clicked to fix canvas sizing issues
+            if(tabId === 'analytics') {
+                mainChart.resize();
+                doughnutChart.resize();
+            }
+        }
+
+        // Clock updating
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }, 1000);
+
+        // -------------------------
+        // Chart.js Configuration
+        // -------------------------
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.font.family = 'Inter';
+
+        const ctxMain = document.getElementById('mainChart').getContext('2d');
+        const gradOrange = ctxMain.createLinearGradient(0, 0, 0, 400);
+        gradOrange.addColorStop(0, 'rgba(255, 159, 67, 0.4)');
+        gradOrange.addColorStop(1, 'rgba(255, 159, 67, 0)');
+        
+        const gradBlue = ctxMain.createLinearGradient(0, 0, 0, 400);
+        gradBlue.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradBlue.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        const mainChart = new Chart(ctxMain, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Solar Power (W)',
+                        borderColor: '#ff9f43',
+                        backgroundColor: gradOrange,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        tension: 0.4,
+                        fill: true,
+                        data: []
+                    },
+                    {
+                        label: 'Output Power (W)',
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradBlue,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        tension: 0.4,
+                        fill: true,
+                        data: []
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', align: 'end', labels: { boxWidth: 10, usePointStyle: true, color: '#e5e7eb' } },
+                    tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(17, 22, 49, 0.9)', titleColor: '#fff', bodyColor: '#e5e7eb', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 }
+                },
+                scales: {
+                    x: { grid: { display: false, drawBorder: false }, ticks: { maxTicksLimit: 8 } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, beginAtZero: true }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            }
+        });
+
+        const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+        const doughnutChart = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Output Power', 'System Loss'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#3b82f6', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#e5e7eb', usePointStyle: true, padding: 20 } },
+                    tooltip: { backgroundColor: 'rgba(17, 22, 49, 0.9)', padding: 10 }
+                }
+            }
+        });
+
+        // -------------------------
+        // Data Fetching & Syncing
+        // -------------------------
+        let errorCount = 0;
+        const consoleFeed = document.getElementById('console-feed');
+        let lastTimestamp = "";
+        let isSettingsSyncing = false; // Prevents form overwrite while typing
+        let wasConnected = true;
+
+        function logToConsole(type, msg) {
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const li = document.createElement('li');
+            if (type === "ERROR") {
+                li.innerHTML = `<span class="text-gray-500">[${timeStr}]</span> <span class="text-red-400 font-bold">[ERR]</span> ${msg}`;
+            } else if (type === "INFO") {
+                li.innerHTML = `<span class="text-gray-500">[${timeStr}]</span> <span class="text-blue-400 font-bold">[INFO]</span> ${msg}`;
+            } else {
+                li.innerHTML = `<span class="text-gray-500">[${timeStr}]</span> <span class="text-green-400 font-bold">[REC]</span> ${msg}`;
+            }
+            
+            consoleFeed.prepend(li);
+            if (consoleFeed.children.length > 20) {
+                consoleFeed.removeChild(consoleFeed.lastChild);
+            }
+        }
+
+        function updateUI(data) {
+            // Check disconnect threshold (10 seconds)
+            const isDisconnected = (data.age_seconds > 10);
+
+            if (isDisconnected) {
+                if (wasConnected) {
+                    logToConsole("ERROR", "ESP32 Connection Lost! No data received.");
+                    wasConnected = false;
+                }
+                
+                document.getElementById('status-dot').classList.remove('bg-green-500');
+                document.getElementById('status-dot').classList.add('bg-red-500');
+                document.getElementById('status-text').innerText = 'ESP32 Disconnected';
+                document.getElementById('status-text').classList.remove('text-green-400');
+                document.getElementById('status-text').classList.add('text-red-400');
+                
+                // Zero out telemetry data logically
+                data.p_plts = 0; data.v_plts = 0; data.i_plts = 0;
+                data.p_out = 0; data.v_out = 0; data.i_out = 0;
+                data.batt_pct = 0;
+            } else {
+                if (!wasConnected) {
+                    logToConsole("INFO", "ESP32 Reconnected! Data stream resumed.");
+                    wasConnected = true;
+                }
+                
+                // Print regular data if it's a new timestamp
+                const timeStr = new Date(data.timestamp).toLocaleTimeString('en-US', { hour12: false });
+                if (timeStr !== lastTimestamp) {
+                    logToConsole("DATA", `{\"V\":${(data.v_plts||0).toFixed(2)}, \"I\":${(data.i_plts||0).toFixed(2)}, \"B\":${(data.batt_pct||0).toFixed(1)}}`);
+                    lastTimestamp = timeStr;
+                }
+
+                document.getElementById('status-dot').classList.remove('bg-red-500');
+                document.getElementById('status-dot').classList.add('bg-green-500');
+                document.getElementById('status-text').innerText = 'ESP32 Connected';
+                document.getElementById('status-text').classList.remove('text-red-400');
+                document.getElementById('status-text').classList.add('text-green-400');
+                document.getElementById('last-update-time').innerText = 'Last update: ' + new Date().toLocaleTimeString();
+            }
+
+            // Safe values
+            const p_plts = data.p_plts || 0;
+            const p_out = data.p_out || 0;
+            const eff = p_plts > 0 ? ((p_out / p_plts) * 100) : 0;
+            const loss = Math.max(0, p_plts - p_out);
+
+            // Update Dashboard Cards
+            document.getElementById('val-p-plts').innerText = p_plts.toFixed(2);
+            document.getElementById('val-v-plts').innerText = (data.v_plts || 0).toFixed(2);
+            document.getElementById('val-i-plts').innerText = (data.i_plts || 0).toFixed(2);
+            document.getElementById('val-p-out').innerText = p_out.toFixed(2);
+            document.getElementById('val-v-out').innerText = (data.v_out || 0).toFixed(2);
+            document.getElementById('val-i-out').innerText = (data.i_out || 0).toFixed(2);
+            document.getElementById('val-batt').innerText = (data.batt_pct || 0).toFixed(1);
+            document.getElementById('batt-bar').style.width = `${Math.min(100, Math.max(0, data.batt_pct || 0))}%`;
+            document.getElementById('val-eff').innerText = eff.toFixed(1);
+            document.getElementById('eff-bar').style.width = `${Math.min(100, Math.max(0, eff))}%`;
+            document.getElementById('val-loss').innerText = loss.toFixed(2);
+
+            // Update Dashboard Table
+            document.getElementById('tbl-v-plts').innerText = (data.v_plts || 0).toFixed(2);
+            document.getElementById('tbl-i-plts').innerText = (data.i_plts || 0).toFixed(2);
+            document.getElementById('tbl-p-plts').innerText = p_plts.toFixed(2);
+            document.getElementById('tbl-v-out').innerText = (data.v_out || 0).toFixed(2);
+            document.getElementById('tbl-i-out').innerText = (data.i_out || 0).toFixed(2);
+            document.getElementById('tbl-p-out').innerText = p_out.toFixed(2);
+
+            // Update Analytics
+            doughnutChart.data.datasets[0].data = [p_out, loss];
+            doughnutChart.update();
+            document.getElementById('stat-gen').innerText = p_plts.toFixed(2) + " W";
+            document.getElementById('stat-use').innerText = p_out.toFixed(2) + " W";
+            document.getElementById('stat-loss').innerText = loss.toFixed(2) + " W";
+
+            // Update Settings Display (Read Only)
+            if (data.sol_vmax !== undefined) {
+                document.getElementById('disp-vmax').innerText = data.sol_vmax + " V";
+                document.getElementById('disp-imax').innerText = data.sol_imax + " A";
+                
+                let batStr = "SLA";
+                if(data.bat_type == 1) batStr = "Li-ion";
+                if(data.bat_type == 2) batStr = "LiFePO4";
+                document.getElementById('disp-battype').innerText = batStr;
+                
+                document.getElementById('disp-sysvolt').innerText = data.sys_volt + " V";
+                document.getElementById('disp-batcap').innerText = data.bat_cap + " Ah";
+
+                // Initialize form ONLY if it's empty
+                if(document.getElementById('sol_vmax').value === "") {
+                    document.getElementById('sol_vmax').value = data.sol_vmax;
+                    document.getElementById('sol_imax').value = data.sol_imax;
+                    document.getElementById('bat_type').value = data.bat_type;
+                    document.getElementById('sys_volt').value = data.sys_volt;
+                    document.getElementById('bat_cap').value = data.bat_cap;
+                }
+
+                if (!isSettingsSyncing) {
+                    document.getElementById('settings-msg').innerText = "Status: Synchronized with ESP32";
+                    document.getElementById('settings-msg').classList.replace('text-yellow-400', 'text-gray-400');
+                    document.getElementById('settings-success-icon').classList.remove('hidden');
+                    document.getElementById('btn-save').innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i> Apply Settings to ESP32`;
+                    document.getElementById('btn-save').disabled = false;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        async function fetchLatest() {
+            if (!localStorage.getItem('mppt_token')) return; // Don't fetch if not logged in
+            
+            try {
+                const res = await fetch('/api/latest');
+                if (!res.ok) throw new Error('Network error');
+                const responseJson = await res.json();
+                
+                if (responseJson.status === 'ok' && responseJson.data) {
+                    const data = responseJson.data;
+                    updateUI(data);
+                }
+                errorCount = 0;
+            } catch (err) {
+                errorCount++;
+                if (errorCount > 3) {
+                    if (wasConnected) {
+                        logToConsole("ERROR", "API Server Unreachable!");
+                        wasConnected = false;
+                    }
+                    document.getElementById('status-dot').classList.remove('bg-green-500');
+                    document.getElementById('status-dot').classList.add('bg-red-500');
+                    document.getElementById('status-text').innerText = 'Server Disconnected';
+                    document.getElementById('status-text').classList.remove('text-green-400');
+                    document.getElementById('status-text').classList.add('text-red-400');
+                    document.getElementById('settings-msg').innerText = "Status: Warning! Server Disconnected";
+                    document.getElementById('settings-msg').classList.replace('text-gray-400', 'text-red-400');
+                    document.getElementById('settings-success-icon').classList.add('hidden');
+                }
+            }
+        }
+
+        async function fetchHistory() {
+            if (!localStorage.getItem('mppt_token')) return;
+            
+            try {
+                const res = await fetch('/api/history');
+                if (!res.ok) return;
+                const responseJson = await res.json();
+                
+                if (responseJson.status === 'ok' && responseJson.data && responseJson.data.length > 0) {
+                    const history = responseJson.data;
+                    const labels = history.map(h => h.time || h.timestamp.split('T')[1]);
+                    const pPltsData = history.map(h => h.p_plts);
+                    const pOutData = history.map(h => h.p_out);
+
+                    mainChart.data.labels = labels;
+                    mainChart.data.datasets[0].data = pPltsData;
+                    mainChart.data.datasets[1].data = pOutData;
+                    mainChart.update('none');
+                }
+            } catch (err) {
+                // Ignore history fetch errors silently
+            }
+        }
+
+        // -------------------------
+        // Form Submission
+        // -------------------------
+        async function submitSettings(e) {
+            e.preventDefault();
+            isSettingsSyncing = true; // Lock form updates from backend polling
+            
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Queueing...`;
+            
+            const payload = {
+                sol_vmax: parseInt(document.getElementById('sol_vmax').value),
+                sol_imax: parseInt(document.getElementById('sol_imax').value),
+                bat_type: parseInt(document.getElementById('bat_type').value),
+                sys_volt: parseInt(document.getElementById('sys_volt').value),
+                bat_cap: parseInt(document.getElementById('bat_cap').value)
+            };
+
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    document.getElementById('settings-msg').innerText = "Status: Waiting for ESP32 to pull updates...";
+                    document.getElementById('settings-msg').classList.replace('text-gray-400', 'text-yellow-400');
+                    document.getElementById('settings-success-icon').classList.add('hidden');
+                }
+            } catch(e) {
+                alert("Failed to reach server");
+            }
+
+            // Release lock after 3 seconds (gives ESP32 time to fetch and report back new values)
+            setTimeout(() => {
+                isSettingsSyncing = false;
+                lucide.createIcons();
+            }, 3000);
+        }
+
+        async function handleOtaUpload() {
+            const fileInput = document.getElementById('ota-file');
+            const file = fileInput.files[0];
+            const msgEl = document.getElementById('ota-msg');
+            const btn = document.getElementById('btn-ota');
+            
+            if (!file) {
+                msgEl.innerText = "Status: ⚠️ Tolong pilih file .bin terlebih dahulu";
+                msgEl.className = "align-middle text-red-400";
+                return;
+            }
+            if (!file.name.endsWith('.bin')) {
+                msgEl.innerText = "Status: ⚠️ File harus berakhiran .bin!";
+                msgEl.className = "align-middle text-red-400";
+                return;
+            }
+
+            msgEl.innerText = "Status: ⏳ Sedang mengunggah dan Flash ESP32... Mohon tunggu (sekitar 1-2 menit)";
+            msgEl.className = "align-middle text-yellow-400 font-bold";
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/ota', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                
+                if(result.status === 'success') {
+                    msgEl.innerText = "Status: " + result.message;
+                    msgEl.className = "align-middle text-green-400 font-bold";
+                    fileInput.value = ""; // Clear file
+                } else {
+                    msgEl.innerText = "Status: " + result.message;
+                    msgEl.className = "align-middle text-red-400";
+                }
+            } catch(e) {
+                msgEl.innerText = "Status: ⚠️ Error gagal menghubungi Server!";
+                msgEl.className = "align-middle text-red-400";
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Run fetch loops
+        setInterval(fetchLatest, 2000);
+        setInterval(fetchHistory, 3000);
+        
+        // Initial fetch
+        fetchLatest();
+        fetchHistory();
+
+    </script>
+</body>
+</html>
