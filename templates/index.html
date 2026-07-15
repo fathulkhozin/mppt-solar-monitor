@@ -303,6 +303,27 @@
                 </div>
             </div>
 
+            <!-- Remote Load Control (SCADA) -->
+            <div class="glass-card p-6 mb-8 relative overflow-hidden group border-l-4 border-l-gray-800 transition-colors duration-500" id="load-card">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div id="load-icon-bg" class="p-4 bg-gray-800/50 rounded-2xl transition-colors duration-500">
+                            <i data-lucide="lightbulb" id="load-icon" class="w-8 h-8 text-gray-500 transition-colors duration-500"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Remote Load Control</h3>
+                            <p class="text-sm mt-1 font-medium text-gray-500 transition-colors duration-500" id="load-text-status">Status: OFF</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="load-toggle" onchange="toggleLoad(this.checked)" class="sr-only peer">
+                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-400 transition-colors shadow-inner"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Bottom Row: Table + Terminal -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Data Table -->
@@ -793,6 +814,34 @@
             document.getElementById('stat-use').innerText = p_out.toFixed(2) + " W";
             document.getElementById('stat-loss').innerText = loss.toFixed(2) + " W";
 
+            // Update SCADA Load Control UI
+            if (data.load_status !== undefined) {
+                const loadToggle = document.getElementById('load-toggle');
+                const loadIconBg = document.getElementById('load-icon-bg');
+                const loadIcon = document.getElementById('load-icon');
+                const loadText = document.getElementById('load-text-status');
+                const loadCard = document.getElementById('load-card');
+                
+                // Only update the checkbox if it differs from the server's truth (avoids switch flickering when user clicks it)
+                if (loadToggle.checked !== data.load_status) {
+                    loadToggle.checked = data.load_status;
+                }
+                
+                if (data.load_status) {
+                    loadIconBg.className = "p-4 bg-yellow-500/10 rounded-2xl transition-colors duration-500";
+                    loadIcon.className = "w-8 h-8 text-yellow-400 transition-colors duration-500 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]";
+                    loadText.innerText = "Status: BEBAN MENYALA (ON)";
+                    loadText.className = "text-sm mt-1 font-bold text-yellow-400 transition-colors duration-500";
+                    loadCard.className = "glass-card p-6 mb-8 relative overflow-hidden group border-l-4 border-l-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.05)]";
+                } else {
+                    loadIconBg.className = "p-4 bg-gray-800/50 rounded-2xl transition-colors duration-500";
+                    loadIcon.className = "w-8 h-8 text-gray-500 transition-colors duration-500";
+                    loadText.innerText = "Status: BEBAN MATI (OFF)";
+                    loadText.className = "text-sm mt-1 font-medium text-gray-500 transition-colors duration-500";
+                    loadCard.className = "glass-card p-6 mb-8 relative overflow-hidden group border-l-4 border-l-gray-800 transition-colors duration-500";
+                }
+            }
+
             // Update Settings Display (Read Only)
             if (data.sol_vmax !== undefined) {
                 document.getElementById('disp-vmax').innerText = data.sol_vmax + " V";
@@ -969,6 +1018,21 @@
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        async function toggleLoad(checked) {
+            try {
+                const res = await fetch('/api/toggle_load', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ state: checked })
+                });
+                if(!res.ok) {
+                    console.error("Failed to queue load command");
+                }
+            } catch(e) {
+                console.error("Error toggling load:", e);
             }
         }
 

@@ -35,6 +35,7 @@ latest: dict = {}
 
 # Store pending settings to send to ESP32 on its next ping
 pending_settings: Optional[Dict[str, int]] = None
+pending_load_cmd: Optional[bool] = None
 
 # Store the IP of the last device to send data
 esp32_ip: Optional[str] = None
@@ -55,6 +56,10 @@ class SensorPayload(BaseModel):
     bat_type: Optional[int] = 0
     sys_volt: Optional[int] = 12
     bat_cap: Optional[int] = 50
+    load_status: Optional[bool] = False
+
+class TogglePayload(BaseModel):
+    state: bool
 
 class SettingsPayload(BaseModel):
     sol_vmax: int
@@ -86,7 +91,7 @@ async def login(payload: LoginPayload):
 @app.post("/api/data")
 async def receive_data(payload: SensorPayload, request: Request):
     """Accept sensor data from ESP32 (or simulator)."""
-    global latest, pending_settings, esp32_ip
+    global latest, pending_settings, esp32_ip, pending_load_cmd
     
     if request.client and request.client.host:
         esp32_ip = request.client.host
@@ -117,6 +122,7 @@ async def receive_data(payload: SensorPayload, request: Request):
         "bat_type": payload.bat_type,
         "sys_volt": payload.sys_volt,
         "bat_cap": payload.bat_cap,
+        "load_status": payload.load_status,
     }
 
     latest = record
@@ -130,6 +136,11 @@ async def receive_data(payload: SensorPayload, request: Request):
         response["settings"] = pending_settings
         print(f"Sent pending settings to ESP32: {response['settings']}")
         pending_settings = None # Clear after sending
+        
+    if pending_load_cmd is not None:
+        response["remote_load_cmd"] = pending_load_cmd
+        print(f"Sent remote_load_cmd to ESP32: {pending_load_cmd}")
+        pending_load_cmd = None
 
     return response
 
@@ -168,6 +179,13 @@ async def update_settings(payload: SettingsPayload):
         "bat_cap": payload.bat_cap
     }
     return {"status": "ok", "message": "Pengaturan disimpan dan menunggu sinkronisasi dengan ESP32..."}
+
+@app.post("/api/toggle_load")
+async def toggle_load(payload: TogglePayload):
+    """Queue a load toggle command for the ESP32."""
+    global pending_load_cmd
+    pending_load_cmd = payload.state
+    return {"status": "ok", "message": "Command queued for ESP32"}
 
 @app.post("/api/ota")
 async def handle_ota(file: UploadFile = File(...)):
