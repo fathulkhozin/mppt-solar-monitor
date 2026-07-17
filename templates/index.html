@@ -28,15 +28,14 @@
                         sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
                     },
                     colors: {
-                        darkBg: '#0d1f0f',
-                        cardBg: '#122314',
-                        accentOrange: '#d4a017',
-                        accentBlue: '#2e7d32',
-                        accentGreen: '#4caf50',
-                        accentPurple: '#1a6b3c',
-                        unuGreen: '#1a6b3c',
-                        unuGold: '#d4a017',
-                        unuLight: '#e8f5e9',
+                        darkBg: '#0a0a0a',
+                        cardBg: '#141414',
+                        accentOrange: '#c9a227',
+                        accentBlue: '#c9a227',
+                        accentGreen: '#e8c547',
+                        accentPurple: '#a07c1a',
+                        unuGold: '#c9a227',
+                        unuDark: '#0a0a0a',
                     }
                 }
             }
@@ -45,66 +44,64 @@
 
     <style>
         body {
-            background-color: #0d1f0f;
-            color: #e8f5e9;
+            background-color: #080808;
+            color: #f0ede8;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(26, 107, 60, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(212, 160, 23, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(76, 175, 80, 0.04) 0%, transparent 70%);
+                radial-gradient(ellipse at 20% 10%, rgba(201, 162, 39, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 90%, rgba(201, 162, 39, 0.04) 0%, transparent 50%);
             background-attachment: fixed;
         }
 
         .glass-card {
-            background: rgba(18, 35, 20, 0.75);
+            background: rgba(20, 18, 14, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(76, 175, 80, 0.12);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(76,175,80,0.08);
+            border: 1px solid rgba(201, 162, 39, 0.12);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(201,162,39,0.06);
             border-radius: 1rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .glass-panel {
-            background: rgba(13, 31, 15, 0.92);
+            background: rgba(14, 13, 10, 0.95);
             backdrop-filter: blur(30px);
-            border: 1px solid rgba(76, 175, 80, 0.15);
+            border: 1px solid rgba(201, 162, 39, 0.15);
         }
 
         .glass-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(76,175,80,0.2);
-            border: 1px solid rgba(76, 175, 80, 0.25);
+            box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(201,162,39,0.25);
+            border: 1px solid rgba(201, 162, 39, 0.3);
         }
 
         .metric-value {
-            background: linear-gradient(135deg, #a5d6a7, #ffffff);
+            background: linear-gradient(135deg, #e8c547, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* UNU Jogja Header Bar */
-        .unu-header-bar {
-            background: linear-gradient(135deg, #1a6b3c 0%, #0d4a26 50%, #1a6b3c 100%);
-            border-bottom: 3px solid #d4a017;
-        }
-
-        /* Gold shimmer on logo */
+        /* UNU Jogja Gold shimmer on logo */
         .gold-shimmer {
-            background: linear-gradient(135deg, #d4a017, #f0c040, #d4a017);
+            background: linear-gradient(90deg, #c9a227 0%, #f0d060 40%, #c9a227 60%, #e8c547 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shimmer 3s linear infinite;
+            background-size: 300% auto;
+            animation: shimmer 4s linear infinite;
         }
 
         @keyframes shimmer {
             0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+            100% { background-position: 300% center; }
         }
 
-        /* Green glow effects */
+        /* Gold glow effect */
         .unu-glow {
-            box-shadow: 0 0 20px rgba(26, 107, 60, 0.4), 0 0 40px rgba(26, 107, 60, 0.2);
+            box-shadow: 0 0 25px rgba(201, 162, 39, 0.5), 0 0 50px rgba(201, 162, 39, 0.2);
+        }
+
+        /* Gold accent top line on cards */
+        .gold-top-border {
+            border-top: 2px solid rgba(201, 162, 39, 0.6);
         }
 
         .pulse-dot {
@@ -129,13 +126,13 @@
         /* Console feed */
         .terminal-scroll {
             scrollbar-width: thin;
-            scrollbar-color: #374151 transparent;
+            scrollbar-color: #3a3228 transparent;
         }
         .terminal-scroll::-webkit-scrollbar {
             width: 6px;
         }
         .terminal-scroll::-webkit-scrollbar-thumb {
-            background-color: #374151;
+            background-color: #3a3228;
             border-radius: 3px;
         }
         
@@ -145,17 +142,17 @@
         
         /* Input styling */
         input[type="number"], select {
-            background-color: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid rgba(201,162,39,0.2);
+            color: #f0ede8;
             padding: 10px;
             border-radius: 8px;
             width: 100%;
             outline: none;
         }
         input[type="number"]:focus, select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            border-color: #c9a227;
+            box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.15);
         }
         
         #login-screen {
@@ -165,8 +162,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(13, 31, 15, 0.97);
+            background: rgba(8, 8, 8, 0.98);
             backdrop-filter: blur(12px);
+        }
+
+        /* Nav hover effect */
+        .nav-item:hover {
+            background: rgba(201, 162, 39, 0.08) !important;
+            color: #e8c547 !important;
         }
     </style>
 </head>
@@ -174,16 +177,16 @@
 
     <!-- Login Screen -->
     <div id="login-screen">
-        <div class="glass-panel p-8 rounded-2xl w-full max-w-md mx-4 shadow-2xl" style="border: 1px solid rgba(26,107,60,0.4); border-top: 3px solid #d4a017;">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md mx-4 shadow-2xl" style="border: 1px solid rgba(201,162,39,0.3); border-top: 3px solid #c9a227;">
             <div class="text-center mb-8">
                 <!-- UNU Jogja Logo SVG -->
                 <div class="flex justify-center mb-4">
                     <div class="relative">
-                        <div class="w-20 h-20 rounded-full flex items-center justify-center unu-glow" style="background: linear-gradient(135deg, #1a6b3c, #0d4a26); border: 2px solid #d4a017;">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center unu-glow" style="background: linear-gradient(135deg, #1a1208, #2a1e08); border: 2px solid #c9a227;">
                             <svg viewBox="0 0 100 100" class="w-12 h-12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <!-- Bintang 9 (NU symbol simplified) -->
-                                <polygon points="50,8 61,35 90,35 68,55 77,82 50,65 23,82 32,55 10,35 39,35" fill="#d4a017" opacity="0.9"/>
-                                <circle cx="50" cy="50" r="18" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
+                                <polygon points="50,8 61,35 90,35 68,55 77,82 50,65 23,82 32,55 10,35 39,35" fill="#c9a227" opacity="0.95"/>
+                                <circle cx="50" cy="50" r="18" fill="none" stroke="#f0d060" stroke-width="2" opacity="0.9"/>
                                 <text x="50" y="56" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial">NU</text>
                             </svg>
                         </div>
@@ -192,54 +195,54 @@
                 <div class="mb-1">
                     <span class="text-3xl font-black gold-shimmer">OptiVolt</span>
                 </div>
-                <p class="text-xs text-green-400/70 tracking-widest uppercase mb-1">Universitas Nahdlatul Ulama Yogyakarta</p>
-                <p class="text-gray-500 text-sm mt-2">Sistem Monitoring MPPT IoT — Masuk untuk melanjutkan</p>
+                <p class="text-xs tracking-widest uppercase mb-1" style="color:rgba(201,162,39,0.7);">Universitas Nahdlatul Ulama Yogyakarta</p>
+                <p class="text-sm mt-2" style="color:rgba(240,237,232,0.4);">Sistem Monitoring MPPT IoT — Masuk untuk melanjutkan</p>
             </div>
             <form id="login-form" onsubmit="handleLogin(event)">
                 <div class="mb-4">
-                    <label class="block text-sm mb-1" style="color:#a5d6a7">Username</label>
-                    <input type="text" id="username" class="w-full rounded-lg p-3 text-white outline-none" style="background:rgba(26,107,60,0.15); border: 1px solid rgba(76,175,80,0.3);" required>
+                    <label class="block text-sm mb-1" style="color:rgba(201,162,39,0.8)">Username</label>
+                    <input type="text" id="username" class="w-full rounded-lg p-3 outline-none" style="background:rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.25); color:#f0ede8;" required>
                 </div>
                 <div class="mb-6">
-                    <label class="block text-sm mb-1" style="color:#a5d6a7">Password</label>
-                    <input type="password" id="password" class="w-full rounded-lg p-3 text-white outline-none" style="background:rgba(26,107,60,0.15); border: 1px solid rgba(76,175,80,0.3);" required>
+                    <label class="block text-sm mb-1" style="color:rgba(201,162,39,0.8)">Password</label>
+                    <input type="password" id="password" class="w-full rounded-lg p-3 outline-none" style="background:rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.25); color:#f0ede8;" required>
                 </div>
                 <p id="login-error" class="text-red-400 text-sm mb-4 hidden text-center">Username atau Password salah!</p>
-                <button type="submit" class="w-full font-bold p-3 rounded-lg transition-all text-white" style="background: linear-gradient(135deg, #1a6b3c, #2e7d32); border: 1px solid #d4a017; box-shadow: 0 4px 15px rgba(26,107,60,0.4);">
+                <button type="submit" class="w-full font-bold p-3 rounded-lg transition-all" style="background: linear-gradient(135deg, #c9a227, #a07c1a); color:#0a0a0a; box-shadow: 0 4px 20px rgba(201,162,39,0.35); letter-spacing:0.5px;">
                     🔐 Masuk ke Dashboard
                 </button>
             </form>
-            <p class="text-center text-xs mt-6" style="color: rgba(165,214,167,0.4)">© 2026 OptiVolt — UNU Jogja IoT Research</p>
+            <p class="text-center text-xs mt-6" style="color: rgba(201,162,39,0.25)">© 2026 OptiVolt — UNU Jogja IoT Research</p>
         </div>
     </div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-full md:w-64 flex flex-col z-10 shrink-0 hidden-section" style="background: linear-gradient(180deg, #0d2e10 0%, #0a1f0c 100%); border-right: 1px solid rgba(26,107,60,0.4);">
-        <!-- Sidebar Header - UNU Style -->
-        <div class="p-5 flex items-center gap-3" style="background: linear-gradient(135deg, #1a6b3c, #0d4a26); border-bottom: 2px solid #d4a017;">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background:rgba(255,255,255,0.15); border: 1px solid rgba(212,160,23,0.6);">
+    <aside id="sidebar" class="w-full md:w-64 flex flex-col z-10 shrink-0 hidden-section" style="background: linear-gradient(180deg, #0e0c08 0%, #080808 100%); border-right: 1px solid rgba(201,162,39,0.15);">
+        <!-- Sidebar Header - UNU Black+Gold Style -->
+        <div class="p-5 flex items-center gap-3" style="background: linear-gradient(135deg, #1a1208, #0e0c06); border-bottom: 2px solid #c9a227;">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 unu-glow" style="background: linear-gradient(135deg, #2a1e08, #1a1208); border: 1.5px solid rgba(201,162,39,0.8);">
                 <svg viewBox="0 0 100 100" class="w-6 h-6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="50,8 61,35 90,35 68,55 77,82 50,65 23,82 32,55 10,35 39,35" fill="#d4a017"/>
-                    <circle cx="50" cy="50" r="18" fill="none" stroke="white" stroke-width="3"/>
+                    <polygon points="50,8 61,35 90,35 68,55 77,82 50,65 23,82 32,55 10,35 39,35" fill="#c9a227"/>
+                    <circle cx="50" cy="50" r="18" fill="none" stroke="#f0d060" stroke-width="2.5"/>
                     <text x="50" y="56" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial">NU</text>
                 </svg>
             </div>
             <div>
                 <h1 class="font-black text-lg tracking-tight text-white">OptiVolt</h1>
-                <p class="text-xs" style="color:rgba(212,160,23,0.9)">UNU Jogja · IoT MPPT</p>
+                <p class="text-xs" style="color:rgba(201,162,39,0.85)">UNU Jogja · IoT MPPT</p>
             </div>
         </div>
         
         <nav class="flex-1 p-4 space-y-1.5">
-            <a href="#" onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors" style="background:rgba(26,107,60,0.25); color:#a5d6a7; border-color:rgba(76,175,80,0.3);">
+            <a href="#" onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors" style="background:rgba(201,162,39,0.1); color:#e8c547; border-color:rgba(201,162,39,0.25);">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                 <span class="font-semibold">Dashboard</span>
             </a>
-            <a href="#" onclick="switchTab('analytics')" id="tab-analytics" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" style="color:rgba(165,214,167,0.6); hover:background:rgba(26,107,60,0.15);">
+            <a href="#" onclick="switchTab('analytics')" id="tab-analytics" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" style="color:rgba(240,237,232,0.5);">
                 <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
                 <span class="font-semibold">Analytics</span>
             </a>
-            <a href="#" onclick="switchTab('settings')" id="tab-settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" style="color:rgba(165,214,167,0.6);">
+            <a href="#" onclick="switchTab('settings')" id="tab-settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" style="color:rgba(240,237,232,0.5);">
                 <i data-lucide="settings" class="w-5 h-5"></i>
                 <span class="font-semibold">Settings</span>
             </a>
@@ -250,14 +253,14 @@
         </nav>
 
         <div class="p-4 mt-auto">
-            <div class="rounded-xl p-4" style="background:rgba(26,107,60,0.15); border: 1px solid rgba(76,175,80,0.2);">
+            <div class="rounded-xl p-4" style="background:rgba(201,162,39,0.06); border: 1px solid rgba(201,162,39,0.15);">
                 <div class="flex items-center gap-2 mb-2">
                     <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-red-500 pulse-dot"></div>
-                    <span id="status-text" class="text-sm font-medium" style="color:#a5d6a7;">Disconnected</span>
+                    <span id="status-text" class="text-sm font-medium" style="color:rgba(240,237,232,0.7);">Disconnected</span>
                 </div>
-                <p class="text-xs" style="color:rgba(165,214,167,0.4)" id="last-update-time">Last update: --:--:--</p>
+                <p class="text-xs" style="color:rgba(201,162,39,0.35)" id="last-update-time">Last update: --:--:--</p>
             </div>
-            <p class="text-center text-xs mt-3" style="color:rgba(165,214,167,0.25)">© UNU Jogja 2026</p>
+            <p class="text-center text-xs mt-3" style="color:rgba(201,162,39,0.2)">© UNU Jogja 2026</p>
         </div>
     </aside>
 
@@ -266,7 +269,7 @@
         <!-- Top Header -->
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h2 class="text-2xl font-bold" id="page-title" style="color:#a5d6a7;">System Overview</h2>
+                <h2 class="text-2xl font-bold" id="page-title" style="color:#e8c547;">System Overview</h2>
                 <p class="text-gray-400 text-sm mt-1" id="page-subtitle">Real-time performance metrics</p>
             </div>
             <div class="text-right hidden sm:block">
@@ -690,12 +693,12 @@
 
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         const gradOrange = ctxMain.createLinearGradient(0, 0, 0, 400);
-        gradOrange.addColorStop(0, 'rgba(255, 159, 67, 0.4)');
-        gradOrange.addColorStop(1, 'rgba(255, 159, 67, 0)');
+        gradOrange.addColorStop(0, 'rgba(201, 162, 39, 0.5)');
+        gradOrange.addColorStop(1, 'rgba(201, 162, 39, 0)');
         
         const gradBlue = ctxMain.createLinearGradient(0, 0, 0, 400);
-        gradBlue.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-        gradBlue.addColorStop(1, 'rgba(59, 130, 246, 0)');
+        gradBlue.addColorStop(0, 'rgba(240, 237, 232, 0.2)');
+        gradBlue.addColorStop(1, 'rgba(240, 237, 232, 0)');
 
         const mainChart = new Chart(ctxMain, {
             type: 'line',
@@ -704,7 +707,7 @@
                 datasets: [
                     {
                         label: 'Solar Power (W)',
-                        borderColor: '#ff9f43',
+                        borderColor: '#c9a227',
                         backgroundColor: gradOrange,
                         borderWidth: 2,
                         pointRadius: 0,
