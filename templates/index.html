@@ -552,7 +552,7 @@
                         </div>
 
                         <div class="pt-4 border-t border-gray-800 flex flex-col gap-4">
-                            <button type="submit" id="btn-save" class="w-full text-white font-bold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #1a6b3c, #2e7d32); border: 1px solid #d4a017; box-shadow: 0 4px 15px rgba(26,107,60,0.3);">
+                            <button type="submit" id="btn-save" class="w-full text-black font-bold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #c9a227, #a07c1a); border: 1px solid #f0d060; box-shadow: 0 4px 15px rgba(201,162,39,0.3);">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Apply Settings to ESP32
                             </button>
                             <span id="settings-status" class="text-sm text-gray-400 text-center block">
@@ -578,7 +578,7 @@
 
                 <div class="flex flex-col gap-4">
                     <input type="file" id="ota-file" accept=".bin" class="block w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-800 file:text-white hover:file:bg-gray-700 transition-colors cursor-pointer border border-gray-800 rounded-xl" />
-                    <button onclick="handleOtaUpload()" id="btn-ota" class="w-full text-white font-bold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #1a6b3c, #0d4a26); border: 1px solid #d4a017; box-shadow: 0 4px 15px rgba(26,107,60,0.3);">
+                    <button onclick="handleOtaUpload()" id="btn-ota" class="w-full text-black font-bold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #c9a227, #a07c1a); border: 1px solid #f0d060; box-shadow: 0 4px 15px rgba(201,162,39,0.3);">
                         <i data-lucide="zap" class="w-4 h-4"></i> Flash to ESP32
                     </button>
                     <span id="ota-status" class="text-sm text-gray-400 text-center block mt-2">
@@ -650,7 +650,7 @@
             
             // Reset styles
             document.querySelectorAll('.nav-item').forEach(el => {
-                el.setAttribute('style', 'color:rgba(165,214,167,0.6);');
+                el.setAttribute('style', 'color:rgba(240,237,232,0.5);');
                 el.className = "nav-item flex items-center gap-3 px-4 py-3 rounded-xl transition-colors";
             });
 
@@ -660,7 +660,7 @@
             // Set active style
             const activeTab = document.getElementById('tab-' + tabId);
             activeTab.className = "nav-item flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors";
-            activeTab.setAttribute('style', 'background:rgba(26,107,60,0.25); color:#a5d6a7; border-color:rgba(76,175,80,0.3);');
+            activeTab.setAttribute('style', 'background:rgba(201,162,39,0.1); color:#e8c547; border-color:rgba(201,162,39,0.25);');
 
             // Update titles
             const titles = {
