@@ -54,6 +54,7 @@ FirebaseData fbdo_read;
 FirebaseAuth auth;
 FirebaseConfig config;
 unsigned long sendDataPrevMillis = 0;
+unsigned long lastCmdCheck = 0;
 bool signupOK = false;
 
 const int POST_INTERVAL = 3000;             
@@ -254,7 +255,12 @@ void sendTelemetryData() {
       } else {
         Serial.println(fbdo.errorReason());
       }
-      
+    }
+  }
+  
+  if (millis() - lastCmdCheck > 500 || lastCmdCheck == 0) {
+    lastCmdCheck = millis();
+    if (Firebase.ready() && signupOK) {
       // 2. Baca Command dari Web SCADA (Contoh: Toggle Load)
       if (Firebase.RTDB.getJSON(&fbdo_read, "/optivolt/commands")) {
         FirebaseJson &cmdJson = fbdo_read.jsonObject();
