@@ -50,6 +50,7 @@ const char* WIFI_PASSWORD = "pandawa5";
 #define DATABASE_URL "mppt-plts-default-rtdb.asia-southeast1.firebasedatabase.app" 
 
 FirebaseData fbdo;
+FirebaseData fbdo_read;
 FirebaseAuth auth;
 FirebaseConfig config;
 unsigned long sendDataPrevMillis = 0;
@@ -255,8 +256,8 @@ void sendTelemetryData() {
       }
       
       // 2. Baca Command dari Web SCADA (Contoh: Toggle Load)
-      if (Firebase.RTDB.getJSON(&fbdo, "/optivolt/commands")) {
-        FirebaseJson &cmdJson = fbdo.jsonObject();
+      if (Firebase.RTDB.getJSON(&fbdo_read, "/optivolt/commands")) {
+        FirebaseJson &cmdJson = fbdo_read.jsonObject();
         FirebaseJsonData jsonData;
         
         // Baca status beban
@@ -274,8 +275,8 @@ void sendTelemetryData() {
         cmdJson.get(jsonData, "settings_updated");
         if (jsonData.success && jsonData.boolValue == true) {
             // Ambil data settings baru dari database
-            if (Firebase.RTDB.getJSON(&fbdo, "/optivolt/settings")) {
-                FirebaseJson &setJson = fbdo.jsonObject();
+            if (Firebase.RTDB.getJSON(&fbdo_read, "/optivolt/settings")) {
+                FirebaseJson &setJson = fbdo_read.jsonObject();
                 FirebaseJsonData sd;
                 
                 Serial.println(">>> MENERIMA SETTING PROFIL BATERAI BARU DARI CLOUD <<<");
@@ -295,7 +296,7 @@ void sendTelemetryData() {
                 initBatteryProfile(); 
                 
                 // Matikan flag update di Firebase
-                Firebase.RTDB.setBool(&fbdo, "/optivolt/commands/settings_updated", false);
+                Firebase.RTDB.setBool(&fbdo_read, "/optivolt/commands/settings_updated", false);
             }
         }
       }
