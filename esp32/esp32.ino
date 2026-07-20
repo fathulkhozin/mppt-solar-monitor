@@ -128,7 +128,13 @@ void setup() {
   display.display();
   delay(2000);
 
-  ina_solar.begin(); ina_bat.begin();
+ // Inisialisasi Sensor Panel Surya & Panggil Kalibrasi 32 Ampere
+  ina_solar.begin(); 
+  ina_solar.setCalibration_32V_32A(); 
+
+  // Inisialisasi Sensor Baterai & Panggil Kalibrasi 32 Ampere
+  ina_bat.begin();
+  ina_bat.setCalibration_32V_32A();
 
   // --- LOAD NVM DATA ---
   preferences.begin("mppt_data", false);

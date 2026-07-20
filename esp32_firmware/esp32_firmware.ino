@@ -14,9 +14,13 @@
 #include <Preferences.h>
 #include <WiFi.h>
 #include <WebServer.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 #include <Update.h>
+#include <Firebase_ESP_Client.h>
+
+// Provide the token generation process info.
+#include "addons/TokenHelper.h"
+// Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
 
 // ======================= DEFINISI PIN ESP32-C3 =======================
 #define I2C_SDA       8
@@ -40,10 +44,16 @@
 const char* WIFI_SSID     = "pandawa5";
 const char* WIFI_PASSWORD = "pandawa5";
 
-// Konfigurasi Target Laptop/PC (Server Reflex)
-const char* LAPTOP_IP     = "10.198.232.249"; // Ganti dengan IP Laptopmu
-const int   LAPTOP_PORT   = 8000;           // Ganti dengan Port API Reflex-mu
-const int   POST_INTERVAL = 3000;             
+// ======================= KONFIGURASI FIREBASE =======================
+#define API_KEY "AIzaSyBFhRGNAZhEYPMtnNMzMvwGtKQPjgd_TIk"
+#define DATABASE_URL "https://mppt-plts-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+bool signupOK = false;
+
+const int POST_INTERVAL = 3000;
 
 // ======================= OBJEK GLOBAL =======================
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
@@ -146,7 +156,22 @@ void setup() {
   // --- WIFI & OTA SERVER ---
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi Connected");
+
+  // Konfigurasi Firebase
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("Firebase Auth OK");
+    signupOK = true;
+  }
+  config.token_status_callback = tokenStatusCallback;
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
   server.on("/update", HTTP_GET, []() {
     server.sendHeader("Connection", "close");
     String html = "<html><body><h2>SPECTRA MPPT OTA</h2><form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update' required><br><br><input type='submit' value='Update Firmware'></form></body></html>";
@@ -185,75 +210,51 @@ void loop() {
   display.display();
 }
 
-// ======================= LOGIKA HTTP POST (ULTIMATE SCADA) =======================
+// ======================= LOGIKA FIREBASE (ULTIMATE SCADA) =======================
 void sendTelemetryData() {
   if (millis() - lastPostTime > POST_INTERVAL) {
-    if (WiFi.status() == WL_CONNECTED) {
-      WiFiClient client;
-      HTTPClient http;
+    if (Firebase.ready() && signupOK) {
+      // Kirim Data Telemetri
+      Firebase.RTDB.setFloat(&fbdo, "optivolt/telemetry/v_plts", sol_V);
+      Firebase.RTDB.setFloat(&fbdo, "optivolt/telemetry/i_plts", sol_A);
+      Firebase.RTDB.setFloat(&fbdo, "optivolt/telemetry/batt_pct", bat_pct);
+      Firebase.RTDB.setFloat(&fbdo, "optivolt/telemetry/v_out", bat_V);
+      Firebase.RTDB.setFloat(&fbdo, "optivolt/telemetry/i_out", bat_A);
+      Firebase.RTDB.setBool(&fbdo, "optivolt/telemetry/load_status", loadStatus);
+      Firebase.RTDB.setInt(&fbdo, "optivolt/telemetry/timestamp", millis());
       
-      String serverUrl = "http://" + String(LAPTOP_IP) + ":" + String(LAPTOP_PORT) + "/api/data";
-      http.begin(client, serverUrl);
-      http.addHeader("Content-Type", "application/json");
-      
-      StaticJsonDocument<400> doc;
-      doc["v_plts"] = sol_V;
-      doc["i_plts"] = sol_A;
-      doc["batt_pct"] = bat_pct;
-      doc["v_out"] = bat_V;
-      doc["i_out"] = bat_A;
-      
-      // Mengirim Status Beban (Load) saat ini ke Web Dashboard
-      doc["load_status"] = loadStatus; 
-
-      doc["sol_vmax"] = sol_vMax;
-      doc["sol_imax"] = sol_iMax;
-      doc["bat_type"] = batType;
-      doc["sys_volt"] = sysVoltage;
-      doc["bat_cap"] = batCapacity;
-      
-      String requestBody;
-      serializeJson(doc, requestBody);
-      int httpResponseCode = http.POST(requestBody);
-      
-      String response = http.getString(); 
-      Serial.print("HTTP Code: "); Serial.println(httpResponseCode);
-      Serial.println("Server Response: " + response);
-      
-      if (httpResponseCode > 0) {
-        StaticJsonDocument<400> resDoc;
-        DeserializationError error = deserializeJson(resDoc, response);
-        
-        if (!error) {
-           // 1. Eksekusi Perintah Beban (Load Control) dari PC
-           if (resDoc.containsKey("remote_load_cmd")) {
-               bool cmdFromWeb = resDoc["remote_load_cmd"];
-               if (loadStatus != cmdFromWeb) {
-                   loadStatus = cmdFromWeb;
-                   digitalWrite(PIN_LOAD, loadStatus ? HIGH : LOW);
-                   Serial.println(">>> STATUS BEBAN DIEKSEKUSI DARI WEB SCADA <<<");
-               }
-           }
-
-           // 2. Eksekusi Perintah Update Setting Baterai dari PC
-           if (resDoc.containsKey("update_settings") && resDoc["update_settings"] == true) {
-               Serial.println(">>> MENERIMA SETTING PROFIL BATERAI BARU <<<");
-               sol_vMax = resDoc["settings"]["sol_vmax"];
-               sol_iMax = resDoc["settings"]["sol_imax"];
-               batType = resDoc["settings"]["bat_type"];
-               sysVoltage = resDoc["settings"]["sys_volt"];
-               batCapacity = resDoc["settings"]["bat_cap"];
-               
-               preferences.putInt("sol_vmax", sol_vMax);
-               preferences.putInt("sol_imax", sol_iMax);
-               preferences.putInt("bat_type", batType);
-               preferences.putInt("sys_volt", sysVoltage);
-               preferences.putInt("bat_cap", batCapacity);
-               initBatteryProfile(); 
-           }
+      // Baca Perintah dari Firebase Commands
+      if (Firebase.RTDB.getBool(&fbdo, "optivolt/commands/load_cmd")) {
+        bool cmdFromWeb = fbdo.boolData();
+        if (loadStatus != cmdFromWeb) {
+            loadStatus = cmdFromWeb;
+            digitalWrite(PIN_LOAD, loadStatus ? HIGH : LOW);
+            Serial.println(">>> STATUS BEBAN DIEKSEKUSI DARI WEB SCADA <<<");
         }
       }
-      http.end();
+
+      // Baca Update Settings dari Firebase
+      if (Firebase.RTDB.getBool(&fbdo, "optivolt/commands/settings_updated")) {
+        bool hasUpdate = fbdo.boolData();
+        if (hasUpdate) {
+            Serial.println(">>> MENERIMA SETTING PROFIL BATERAI BARU DARI FIREBASE <<<");
+            if (Firebase.RTDB.getInt(&fbdo, "optivolt/settings/sol_vmax")) sol_vMax = fbdo.intData();
+            if (Firebase.RTDB.getInt(&fbdo, "optivolt/settings/sol_imax")) sol_iMax = fbdo.intData();
+            if (Firebase.RTDB.getInt(&fbdo, "optivolt/settings/bat_type")) batType = fbdo.intData();
+            if (Firebase.RTDB.getInt(&fbdo, "optivolt/settings/sys_volt")) sysVoltage = fbdo.intData();
+            if (Firebase.RTDB.getInt(&fbdo, "optivolt/settings/bat_cap")) batCapacity = fbdo.intData();
+            
+            preferences.putInt("sol_vmax", sol_vMax);
+            preferences.putInt("sol_imax", sol_iMax);
+            preferences.putInt("bat_type", batType);
+            preferences.putInt("sys_volt", sysVoltage);
+            preferences.putInt("bat_cap", batCapacity);
+            initBatteryProfile(); 
+            
+            // Matikan flag update agar tidak dibaca terus-menerus
+            Firebase.RTDB.setBool(&fbdo, "optivolt/commands/settings_updated", false);
+        }
+      }
     }
     lastPostTime = millis();
   }
