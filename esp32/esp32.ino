@@ -107,7 +107,7 @@ void setup() {
   pinMode(PIN_SD_EN, OUTPUT);
   pinMode(PIN_LOAD, OUTPUT);
   digitalWrite(PIN_SD_EN, LOW); 
-  digitalWrite(PIN_LOAD, LOW);  
+  digitalWrite(PIN_LOAD, HIGH);  
   
   pinMode(BTN_UP, INPUT_PULLUP);
   pinMode(BTN_DOWN, INPUT_PULLUP);
@@ -272,7 +272,7 @@ void sendTelemetryData() {
           bool cmdFromWeb = jsonData.boolValue;
           if (loadStatus != cmdFromWeb) {
              loadStatus = cmdFromWeb;
-             digitalWrite(PIN_LOAD, loadStatus ? HIGH : LOW);
+             digitalWrite(PIN_LOAD, loadStatus ? LOW : HIGH);
              Serial.println(">>> STATUS BEBAN DIEKSEKUSI DARI FIREBASE SCADA <<<");
           }
         }
@@ -448,7 +448,7 @@ void readInputs() {
         }
         else if (mainPage == 2) { 
           loadStatus = !loadStatus; 
-          digitalWrite(PIN_LOAD, loadStatus ? HIGH : LOW);
+          digitalWrite(PIN_LOAD, loadStatus ? LOW : HIGH);
           if (Firebase.ready()) {
               Firebase.RTDB.setBoolAsync(&fbdo_read, "/optivolt/commands/load_cmd", loadStatus);
           }
