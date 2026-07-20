@@ -443,6 +443,9 @@ void readInputs() {
         else if (mainPage == 2) { 
           loadStatus = !loadStatus; 
           digitalWrite(PIN_LOAD, loadStatus ? HIGH : LOW);
+          if (Firebase.ready()) {
+              Firebase.RTDB.setBoolAsync(&fbdo_read, "/optivolt/commands/load_cmd", loadStatus);
+          }
         }
       }
       lastBtnPress = millis();
