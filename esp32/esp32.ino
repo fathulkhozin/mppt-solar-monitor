@@ -55,6 +55,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 unsigned long sendDataPrevMillis = 0;
 unsigned long lastCmdCheck = 0;
+bool last_cmdFromWeb = false;
 bool signupOK = false;
 
 const int POST_INTERVAL = 3000;             
@@ -145,9 +146,8 @@ void setup() {
   // Inisialisasi Sensor
   ina_solar.begin(); 
   ina_solar.setCalibration_32V_32A(); 
-  // BYPASS: Sensor baterai rusak
-  // ina_bat.begin();
-  // ina_bat.setCalibration_32V_32A();
+  ina_bat.begin();
+  ina_bat.setCalibration_32V_32A();
 
   // --- LOAD NVM DATA ---
   preferences.begin("mppt_data", false);
@@ -271,10 +271,13 @@ void sendTelemetryData() {
         cmdJson.get(jsonData, "load_cmd");
         if (jsonData.success) {
           bool cmdFromWeb = jsonData.boolValue;
-          if (loadStatus != cmdFromWeb) {
-             loadStatus = cmdFromWeb;
-             digitalWrite(PIN_LOAD, loadStatus ? LOW : HIGH);
-             Serial.println(">>> STATUS BEBAN DIEKSEKUSI DARI FIREBASE SCADA <<<");
+          if (cmdFromWeb != last_cmdFromWeb) {
+              last_cmdFromWeb = cmdFromWeb;
+              if (loadStatus != cmdFromWeb) {
+                 loadStatus = cmdFromWeb;
+                 digitalWrite(PIN_LOAD, loadStatus ? LOW : HIGH);
+                 Serial.println(">>> STATUS BEBAN DIEKSEKUSI DARI FIREBASE SCADA <<<");
+              }
           }
         }
         
@@ -319,9 +322,8 @@ void readSensors() {
     sol_A = ina_solar.getCurrent_mA() / 1000.0; 
     sol_W = sol_V * sol_A;
 
-    // BYPASS: Gunakan nilai dummy untuk baterai karena sensor rusak
-    bat_V = sysVoltage; // Dibuat statis di 12V / 24V agar algoritma menganggap baterai aman
-    bat_A = 1.25;       // Arus output statis untuk simulasi
+    bat_V = ina_bat.getBusVoltage_V();
+    bat_A = ina_bat.getCurrent_mA() / 1000.0;
     bat_W = bat_V * bat_A;
     
     load_W = (bat_A < 0) ? (bat_V * abs(bat_A)) : 0;
@@ -453,6 +455,7 @@ void readInputs() {
           digitalWrite(PIN_LOAD, loadStatus ? LOW : HIGH);
           if (Firebase.ready()) {
               Firebase.RTDB.setBoolAsync(&fbdo_read, "/optivolt/commands/load_cmd", loadStatus);
+              last_cmdFromWeb = loadStatus; // Update local state so it doesn't trigger when read back
           }
         }
       }
