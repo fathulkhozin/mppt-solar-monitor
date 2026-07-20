@@ -145,8 +145,9 @@ void setup() {
   // Inisialisasi Sensor
   ina_solar.begin(); 
   ina_solar.setCalibration_32V_32A(); 
-  ina_bat.begin();
-  ina_bat.setCalibration_32V_32A();
+  // BYPASS: Sensor baterai rusak
+  // ina_bat.begin();
+  // ina_bat.setCalibration_32V_32A();
 
   // --- LOAD NVM DATA ---
   preferences.begin("mppt_data", false);
@@ -318,8 +319,9 @@ void readSensors() {
     sol_A = ina_solar.getCurrent_mA() / 1000.0; 
     sol_W = sol_V * sol_A;
 
-    bat_V = ina_bat.getBusVoltage_V();
-    bat_A = ina_bat.getCurrent_mA() / 1000.0;
+    // BYPASS: Gunakan nilai dummy untuk baterai karena sensor rusak
+    bat_V = sysVoltage; // Dibuat statis di 12V / 24V agar algoritma menganggap baterai aman
+    bat_A = 1.25;       // Arus output statis untuk simulasi
     bat_W = bat_V * bat_A;
     
     load_W = (bat_A < 0) ? (bat_V * abs(bat_A)) : 0;
