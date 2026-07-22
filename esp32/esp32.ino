@@ -51,6 +51,7 @@ const char* WIFI_PASSWORD = "pandawa5";
 
 FirebaseData fbdo;
 FirebaseData fbdo_read;
+FirebaseData fbdo_history;
 FirebaseAuth auth;
 FirebaseConfig config;
 unsigned long sendDataPrevMillis = 0;
@@ -251,10 +252,20 @@ void sendTelemetryData() {
       telemetryJson.set("load_status", loadStatus);
       
       // Kirim Data Telemetri ke Firebase
-      if (Firebase.RTDB.setJSON(&fbdo, "/optivolt/telemetry", &telemetryJson)) {
+      if (Firebase.RTDB.setJSONAsync(&fbdo, "/optivolt/telemetry", &telemetryJson)) {
         Serial.println("Telemetry Updated to Firebase");
       } else {
         Serial.println(fbdo.errorReason());
+      }
+      
+      // 2. Simpan Riwayat (History) jika MPPT Aktif
+      if (sol_V > 5.0) {
+        // Menggunakan Server Timestamp Firebase (waktu sebenarnya)
+        telemetryJson.set("timestamp/.sv", "timestamp");
+        
+        if (Firebase.RTDB.pushJSONAsync(&fbdo_history, "/optivolt/history", &telemetryJson)) {
+           Serial.println("History saved to cloud.");
+        }
       }
     }
   }
