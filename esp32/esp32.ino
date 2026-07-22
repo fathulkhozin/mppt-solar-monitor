@@ -412,24 +412,30 @@ void handleSetupScroll(int dir) {
 }
 
 void readInputs() {
+  static bool lastUp = HIGH, lastDown = HIGH, lastEnter = HIGH, lastBack = HIGH;
+  bool currUp = digitalRead(BTN_UP);
+  bool currDown = digitalRead(BTN_DOWN);
+  bool currEnter = digitalRead(BTN_ENTER);
+  bool currBack = digitalRead(BTN_BACK);
+
   if (millis() - lastBtnPress > debounceDelay) {
     
     // --- TOMBOL UP ---
-    if (digitalRead(BTN_UP) == LOW) {
+    if (currUp == LOW && lastUp == HIGH) {
       if (currentState == STATE_SETUP) handleSetupScroll(1);
       else if (currentState == STATE_MAIN && mainPage == 4) { menuIndex--; if(menuIndex < 0) menuIndex = 1; }
       lastBtnPress = millis();
     }
     
     // --- TOMBOL DOWN ---
-    else if (digitalRead(BTN_DOWN) == LOW) {
+    else if (currDown == LOW && lastDown == HIGH) {
       if (currentState == STATE_SETUP) handleSetupScroll(-1);
       else if (currentState == STATE_MAIN && mainPage == 4) { menuIndex++; if(menuIndex > 1) menuIndex = 0; }
       lastBtnPress = millis();
     }
     
     // --- TOMBOL ENTER ---
-    else if (digitalRead(BTN_ENTER) == LOW) {
+    else if (currEnter == LOW && lastEnter == HIGH) {
       if (currentState == STATE_SETUP) {
         if (setupStep == 0) { setupStep = 1; }
         else if (setupStep < 6) { setupStep++; } 
@@ -463,7 +469,7 @@ void readInputs() {
     }
     
     // --- TOMBOL BACK / NEXT PAGE ---
-    else if (digitalRead(BTN_BACK) == LOW) {
+    else if (currBack == LOW && lastBack == HIGH) {
       if (currentState == STATE_SETUP) {
         if (setupStep > 1) setupStep--; 
       }
@@ -473,6 +479,11 @@ void readInputs() {
       lastBtnPress = millis();
     }
   }
+
+  lastUp = currUp;
+  lastDown = currDown;
+  lastEnter = currEnter;
+  lastBack = currBack;
 }
 
 // ======================= UI RENDERING (100% BUTTON UI) =======================
