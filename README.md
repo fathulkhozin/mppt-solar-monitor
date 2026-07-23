@@ -73,3 +73,9 @@ Format JSON yang diharapkan oleh Server:
 </p>
 ---
 *Dibuat khusus untuk proyek MPPT IoT Fathul (2026).*
+
+---
+### 🤖 Instruksi Khusus Lanjutan Proyek (AI Assistant)
+Jika Anda membuka repositori ini dari komputer/PC baru dan ingin melanjutkan percakapan pengembangan proyek OptiVolt ini dengan AI Assistant (Antigravity), cukup copy-paste kalimat sakti berikut ke dalam chat AI Anda:
+
+> *"Tolong baca file `docs/MEMORY_CONTEXT.md` di repository github saya, lalu mari kita lanjutkan proyek OptiVolt ini."*
